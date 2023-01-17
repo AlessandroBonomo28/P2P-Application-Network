@@ -107,7 +107,7 @@ class ProtocolP2P():
             conn.setblocking(0)
             ready = select.select([conn], [], [], timeout)
             if ready[0]:
-                datagram_json = conn.recv(self.buffer_size).decode()
+                datagram_json = conn.recv(ProtocolP2P.buffer_size).decode()
             else:
                 raise p2p_exceptions.TimedOut('Timed out')
         return DatagramP2P.from_json(datagram_json)

@@ -1,7 +1,7 @@
 import socket
 import time
-import select
-from protocol import DatagramP2P,HeaderP2P,PayloadP2P,HostP2P,ProtocolP2P
+import select,json
+from protocol import DatagramP2P,HostP2P,ProtocolP2P
 buf_size = 1024
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -18,10 +18,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((address[0],5000))
 my_p2p_host = HostP2P()
 
-datagram = DatagramP2P(
-    header=HeaderP2P(host=my_p2p_host),
-    payload=PayloadP2P(message="PING")
-)
+datagram = DatagramP2P(host=my_p2p_host)
 
 #client_socket.send(datagram_json.encode())
 ProtocolP2P.send_datagram(client_socket,datagram)
@@ -40,10 +37,15 @@ try:
     #msg = client_socket.recv(buf_size)
     print("received ",msg.decode())
 
-    datagram = DatagramP2P(
-    header=HeaderP2P(HostP2P(),"123"),
-    payload=PayloadP2P(message="END")
-    )
+    datagram = DatagramP2P(message="HOSTS")
+    ProtocolP2P.send_datagram(client_socket,datagram)
+    response = ProtocolP2P.recv_datagram(client_socket)
+    print("received hosts",response)
+    hosts_list_str = response.data
+    for i in hosts_list_str:
+        host = json.loads(i)
+        print ("host ",i,host)
+    datagram = DatagramP2P(message="END")
 
     #client_socket.send("END".encode())
     ProtocolP2P.send_datagram(client_socket,datagram)

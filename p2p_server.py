@@ -1,9 +1,25 @@
 import socket
-from protocol import HostP2P,DatagramP2P,HeaderP2P,PayloadP2P, ProtocolP2P
+from protocol import HostP2P, ProtocolP2P,DatagramP2P
 import threading, time
 
 
 class HostList():
+    def __iter__(self):
+        if len(self.host_list) == 0:
+            raise StopIteration
+        self.i = 0
+        self.__keys = list(self.host_list.keys())
+        return self
+    
+    def __next__(self):
+        if self.i < len(self.host_list):
+            self.i +=1
+            k = self.__keys[self.i-1]
+            return self.host_list[k]
+        else:
+            raise StopIteration
+        
+    
     def get_conn(self,host_id: str):
         try:
             return self.host_list[host_id]["conn"]
@@ -30,31 +46,35 @@ class ServerP2P():
     def handle_client(self,conn : socket.socket, addr):
         try:
             datagram = ProtocolP2P.recv_datagram(conn)
-            host_id = datagram.header.host.id
+            host_id = datagram.host.id
             if self.ingoing_hosts.get_host(host_id) !=None:
                 raise Exception("Host already connected")
         except:
             conn.close()
             return
-        
-        self.ingoing_hosts.update(datagram.header.host, conn)
+        ProtocolP2P.send_datagram(conn,DatagramP2P(message="authenticated"))
+        self.ingoing_hosts.update(datagram.host, conn)
         print("Authenticated",addr)
         while True:
             try:
                 datagram = ProtocolP2P.recv_datagram(conn)
-                msg = datagram.payload.message
+                msg = datagram.message
 
                 if msg == "END":
-                    #print("datagram=",datagram.header,datagram.payload)
                     print("Ending connection ",addr)
                     break
                 elif msg == "PING":
-                    ProtocolP2P.send_datagram(conn,)
-                    #conn.send("PONG".encode())
+                    ProtocolP2P.send_datagram(conn,DatagramP2P(message="PONG"))
                 elif msg == "HOSTS":
-                    conn.send("PONG".encode())
+                    hosts = []
+                    for i in self.ingoing_hosts:
+                        hosts.append(i["host"].to_json())
+                    ProtocolP2P.send_datagram(conn,DatagramP2P(
+                        message="HOSTS",
+                        data=hosts
+                        ))
                 else:
-                    conn.send("INVALID COMMAND".encode())
+                    ProtocolP2P.send_datagram(conn,DatagramP2P(status_code=-1, message="INVALID"))
             except Exception as e:
                 print("Exception while communicating",e)
                 break

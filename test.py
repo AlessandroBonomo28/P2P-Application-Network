@@ -1,5 +1,19 @@
-from protocol import HostP2P, HeaderP2P
+from protocol import HostP2P
+from p2p_server import HostList
 import json
+
+l = HostList()
+l.update(HostP2P(id = "1"))
+l.update(HostP2P(id ="12"))
+l.update(HostP2P(id ="123"))
+print("len",len(l.host_list))
+for i in l:
+    print(i)
+    
+
+
+exit()
+
 host = HostP2P()
 json_str= host.to_json()
 print("json str ",json_str)

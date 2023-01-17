@@ -22,58 +22,28 @@ class HostP2P():
     def __str__(self)-> str:
         return "Host "+str(vars(self))
 
-class HeaderP2P():
-
-    @staticmethod
-    def from_json(json_dict : dict):
-        auth_header = HeaderP2P(
-            HostP2P.from_json(json_dict["host"]),
-            json_dict["token"]
-        )
-        return auth_header
-
-
-    def __init__(self, host : HostP2P=None, token : str = None) -> None:
-        self.host = host
-        self.token = token
-    
-    def to_json(self):
-        return json.dumps(self, indent = 4, default=lambda o: o.__dict__)
-    
-    def __str__(self)-> str:
-        return "HeaderP2P "+str(vars(self))
-
-
-
-class PayloadP2P():
-    @staticmethod
-    def from_json(json_dict : dict):
-        payload = PayloadP2P(json_dict["message"],json_dict["data"])
-        return payload
-
-    def __init__(self, message : str, data : dict = None) -> None:
-        self.message = message
-        self.data = data
-    
-    def to_json(self):
-        return json.dumps(self, indent = 4, default=lambda o: o.__dict__)
-    
-    def __str__(self)-> str:
-        return "PayloadP2P "+str(vars(self))
 
 class DatagramP2P():
     @staticmethod
     def from_json(json_str : str):
         json_dict = json.loads(json_str)
+        if json_dict["host"]!=None:
+            host = HostP2P.from_json(json_dict["host"])
+        else:
+            host = None
         datagram_p2p = DatagramP2P(
-            HeaderP2P.from_json(json_dict["header"]),
-            PayloadP2P.from_json(json_dict["payload"])
+            host=host,
+            message=json_dict["message"],
+            data=json_dict["data"],
+            status_code=json_dict["status_code"]
         )
         return datagram_p2p
 
-    def __init__(self, header : HeaderP2P, payload : PayloadP2P) -> None:
-        self.header = header
-        self.payload = payload
+    def __init__(self, host : HostP2P = None, message : str = None, data : str = None,status_code : int = 0) -> None:
+        self.status_code = status_code
+        self.host = host
+        self.message = message
+        self.data = data
     
     def to_json(self):
         return json.dumps(self, indent = 4, default=lambda o: o.__dict__)

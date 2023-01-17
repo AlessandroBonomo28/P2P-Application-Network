@@ -1,32 +1,55 @@
 import socket
-from protocol import Host
+from protocol import Host,DatagramP2P,HeaderP2P,PayloadP2P, ProtocolP2P
 import threading, time
+
+class HostList():
+     
+
+    def update(self, host : Host):
+        self.host_list[host.id] = host
+
+    def remove(self, host: Host):
+        del self.host_list[host.id]
+
+
+    def __init__(self) -> None:
+        self.host_list = {}
 
 class ServerP2P():
     BACKLOG_TCP_ACCEPTED_CONNECTIONS = 5
-    def handle_client(self,sock : socket.socket, addr):
+    def handle_client(self,conn : socket.socket, addr):
+        try:
+            print("Authenticated")
+        except:
+            return
+
         while True:
             try:
-                msg = sock.recv(self.buffer_size).decode()
+                datagram = ProtocolP2P.recv_datagram(conn)
+                msg = datagram.payload.message
                 if msg == "END":
+                    print("datagram=",datagram.header,datagram.payload)
                     print("Ending connection ",addr)
                     break
                 elif msg == "PING":
                     #pass
-                    sock.send("PONG".encode())
+                    conn.send("PONG".encode())
+                elif msg == "HOSTS":
+                    #pass
+                    conn.send("PONG".encode())
                 else:
-                    sock.send("INVALID COMMAND".encode())
+                    conn.send("INVALID COMMAND".encode())
             except Exception as e:
                 print("Exception while communicating",e)
                 break
-        sock.close()
+        conn.close()
 
     def accept_clients(self):
         try:
             while True:
-                sock , addr = self.tcp_accept_socket.accept()
+                conn , addr = self.tcp_accept_socket.accept()
                 print ("New client accepted: ",addr)
-                threading.Thread(target=self.handle_client,args=(sock,addr),daemon=True).start()
+                threading.Thread(target=self.handle_client,args=(conn,addr),daemon=True).start()
         except Exception as e:
             print("Exception in thread accept clients",e)
 
@@ -42,6 +65,9 @@ class ServerP2P():
             print("Exception in thread broadcast receiver",e)
 
     def __init__(self, my_p2p_host : Host, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
+        self.ingoing_hosts = HostList()
+        self.outgoing_hosts = HostList()
+
         self.tcp_accept_port = tcp_accept_port
         self.broad_listen_port = broad_listen_port
         self.broad_send_port = broad_send_port

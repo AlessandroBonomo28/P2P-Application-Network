@@ -1,30 +1,20 @@
 import uuid, json, socket
 import netifaces, select
 import p2p_exceptions
-class Host():
+class HostP2P():
     @staticmethod
     def from_json(json_dict : dict):
         id = str(json_dict["id"])
         name = str(json_dict["name"])
         group = int(json_dict["group"])
-        ip_addr = str(json_dict["ip_addr"])
-        host = Host(id=id,name=name,group=group,ip_addr=ip_addr)
+        host = HostP2P(id=id,name=name,group=group)
         return host
     
-
-    def __get_my_ip(self):
-        iface = netifaces.gateways()['default'][netifaces.AF_INET][1]
-        ip_addr = netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
-        return ip_addr
-    
-    def __init__(self, ip_addr = None, id : str = str(uuid.uuid4()), name : str ="Host",
+    def __init__(self,id : str = str(uuid.uuid4()), name : str ="Host",
                  group : int=0) -> None:
         self.id = id
         self.name = name
         self. group = group
-        if not ip_addr:
-            ip_addr = self.__get_my_ip()
-        self.ip_addr = ip_addr
         
     def to_json(self):
         return json.dumps(self, indent = 4, default=lambda o: o.__dict__)
@@ -36,16 +26,14 @@ class HeaderP2P():
 
     @staticmethod
     def from_json(json_dict : dict):
-        if not json_dict["host"]:
-            return HeaderP2P(token=json_dict["token"])
         auth_header = HeaderP2P(
-            Host.from_json(json_dict["host"]),
+            HostP2P.from_json(json_dict["host"]),
             json_dict["token"]
         )
         return auth_header
 
 
-    def __init__(self, host : Host=None, token : str = None) -> None:
+    def __init__(self, host : HostP2P=None, token : str = None) -> None:
         self.host = host
         self.token = token
     
@@ -60,11 +48,12 @@ class HeaderP2P():
 class PayloadP2P():
     @staticmethod
     def from_json(json_dict : dict):
-        payload = PayloadP2P(json_dict["message"])
+        payload = PayloadP2P(json_dict["message"],json_dict["data"])
         return payload
 
-    def __init__(self, message : str) -> None:
+    def __init__(self, message : str, data : dict = None) -> None:
         self.message = message
+        self.data = data
     
     def to_json(self):
         return json.dumps(self, indent = 4, default=lambda o: o.__dict__)

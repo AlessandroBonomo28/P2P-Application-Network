@@ -1,7 +1,7 @@
 import socket
 import time
 import select
-from protocol import DatagramP2P,HeaderP2P,PayloadP2P,Host,ProtocolP2P
+from protocol import DatagramP2P,HeaderP2P,PayloadP2P,HostP2P,ProtocolP2P
 buf_size = 1024
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -16,7 +16,7 @@ print("Trying to connect: ",address)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 client_socket.connect((address[0],5000))
-my_p2p_host = Host()
+my_p2p_host = HostP2P()
 
 datagram = DatagramP2P(
     header=HeaderP2P(host=my_p2p_host),
@@ -41,7 +41,7 @@ try:
     print("received ",msg.decode())
 
     datagram = DatagramP2P(
-    header=HeaderP2P(Host(),"123"),
+    header=HeaderP2P(HostP2P(),"123"),
     payload=PayloadP2P(message="END")
     )
 

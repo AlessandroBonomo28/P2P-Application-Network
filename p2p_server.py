@@ -1,15 +1,25 @@
 import socket
-from protocol import Host,DatagramP2P,HeaderP2P,PayloadP2P, ProtocolP2P
+from protocol import HostP2P,DatagramP2P,HeaderP2P,PayloadP2P, ProtocolP2P
 import threading, time
 
+
 class HostList():
-     
+    def get_conn(self,host_id: str):
+        try:
+            return self.host_list[host_id]["conn"]
+        except:
+            return None
+    def get_host(self,host_id: str):
+        try:
+            return self.host_list[host_id]["host"]
+        except Exception as e:
+            print("host not found",e)
+            return None
+    def update(self, host : HostP2P, conn : socket.socket = None):
+        self.host_list[host.id] = {"host": host, "conn":conn}
 
-    def update(self, host : Host):
-        self.host_list[host.id] = host
-
-    def remove(self, host: Host):
-        del self.host_list[host.id]
+    def remove(self, host_id: str):
+        del self.host_list[host_id]
 
 
     def __init__(self) -> None:
@@ -19,23 +29,29 @@ class ServerP2P():
     BACKLOG_TCP_ACCEPTED_CONNECTIONS = 5
     def handle_client(self,conn : socket.socket, addr):
         try:
-            print("Authenticated")
+            datagram = ProtocolP2P.recv_datagram(conn)
+            host_id = datagram.header.host.id
+            if self.ingoing_hosts.get_host(host_id) !=None:
+                raise Exception("Host already connected")
         except:
+            conn.close()
             return
-
+        
+        self.ingoing_hosts.update(datagram.header.host, conn)
+        print("Authenticated",addr)
         while True:
             try:
                 datagram = ProtocolP2P.recv_datagram(conn)
                 msg = datagram.payload.message
+
                 if msg == "END":
-                    print("datagram=",datagram.header,datagram.payload)
+                    #print("datagram=",datagram.header,datagram.payload)
                     print("Ending connection ",addr)
                     break
                 elif msg == "PING":
-                    #pass
-                    conn.send("PONG".encode())
+                    ProtocolP2P.send_datagram(conn,)
+                    #conn.send("PONG".encode())
                 elif msg == "HOSTS":
-                    #pass
                     conn.send("PONG".encode())
                 else:
                     conn.send("INVALID COMMAND".encode())
@@ -43,7 +59,7 @@ class ServerP2P():
                 print("Exception while communicating",e)
                 break
         conn.close()
-
+        self.ingoing_hosts.remove(host_id)
     def accept_clients(self):
         try:
             while True:
@@ -64,7 +80,7 @@ class ServerP2P():
         except Exception as e:
             print("Exception in thread broadcast receiver",e)
 
-    def __init__(self, my_p2p_host : Host, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
+    def __init__(self, my_p2p_host : HostP2P, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
         self.ingoing_hosts = HostList()
         self.outgoing_hosts = HostList()
 
@@ -115,7 +131,7 @@ class ServerP2P():
 
 broad_listen_port = 10100
 broad_send_port = 10101
-my_p2p_host = Host()
+my_p2p_host = HostP2P()
 p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=5000, broad_listen_port=broad_listen_port,
                         broad_send_port=broad_send_port)
 

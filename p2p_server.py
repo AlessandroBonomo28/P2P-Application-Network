@@ -3,6 +3,32 @@ from protocol import Host
 import threading, time
 
 class ServerP2P():
+    BACKLOG_TCP_ACCEPTED_CONNECTIONS = 5
+    def handle_client(self,sock : socket.socket, addr):
+        while True:
+            try:
+                msg = sock.recv(self.buffer_size).decode()
+                if msg == "END":
+                    print("Ending connection ",addr)
+                    break
+                elif msg == "PING":
+                    #pass
+                    sock.send("PONG".encode())
+                else:
+                    sock.send("INVALID COMMAND".encode())
+            except Exception as e:
+                print("Exception while communicating",e)
+                break
+        sock.close()
+
+    def accept_clients(self):
+        try:
+            while True:
+                sock , addr = self.tcp_accept_socket.accept()
+                print ("New client accepted: ",addr)
+                threading.Thread(target=self.handle_client,args=(sock,addr)).start()
+        except Exception as e:
+            print("Exception in thread accept clients",e)
 
     def broadcast_receiver(self):
         try:
@@ -15,13 +41,19 @@ class ServerP2P():
         except Exception as e:
             print("Exception in thread broadcast receiver",e)
 
-    def __init__(self, my_p2p_host : Host, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
+    def __init__(self, my_p2p_host : Host, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
+        self.tcp_accept_port = tcp_accept_port
         self.broad_listen_port = broad_listen_port
         self.broad_send_port = broad_send_port
         self.buffer_size = buffer_size
         self.broad_addr = broad_addr
         self.host = '0.0.0.0' 
         self.my_p2p_host = my_p2p_host
+
+        self.tcp_accept_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcp_accept_socket.bind((self.host, tcp_accept_port))
+        self.tcp_accept_socket.listen(self.BACKLOG_TCP_ACCEPTED_CONNECTIONS)
+
         self.sock_broad_listen = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_broad_listen.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock_broad_listen.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -30,7 +62,10 @@ class ServerP2P():
         self.sock_broad_send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_broad_send.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        thread = threading.Thread(target=self.broadcast_receiver).start()
+        self.send_discovery_broadcast()
+
+        threading.Thread(target=self.broadcast_receiver).start()
+        threading.Thread(target=self.accept_clients).start()
 
     def send_discovery_broadcast(self) -> None:
         message = self.my_p2p_host.to_json().encode()
@@ -43,17 +78,24 @@ class ServerP2P():
 
         self.sock_broad_send.close()
     
+    def close_tcp_accept(self):
+        self.tcp_accept_socket.close()
+
+    def close(self):
+        self.close_broadcast()
+        self.close_tcp_accept()
+    
 
 
 broad_listen_port = 10100
 broad_send_port = 10101
 my_p2p_host = Host()
-p2p_server = ServerP2P(my_p2p_host,broad_listen_port=broad_listen_port,
+p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=5000, broad_listen_port=broad_listen_port,
                         broad_send_port=broad_send_port)
 
 
-p2p_server2 = ServerP2P(my_p2p_host,broad_listen_port=10101,
-                        broad_send_port=10100)
+#p2p_server2 = ServerP2P(my_p2p_host,tcp_accept_port=5001, broad_listen_port=10101,
+#                        broad_send_port=10100)
 
 #p2p_server.send_discovery_broadcast()
 try:
@@ -63,8 +105,8 @@ try:
         time.sleep(1)
 except:
     print("exit")
-    p2p_server.close_broadcast()
-    p2p_server2.close_broadcast()
+    p2p_server.close()
+    #p2p_server2.close_broadcast()
 
 
 

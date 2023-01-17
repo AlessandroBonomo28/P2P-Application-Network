@@ -26,7 +26,7 @@ class ServerP2P():
             while True:
                 sock , addr = self.tcp_accept_socket.accept()
                 print ("New client accepted: ",addr)
-                threading.Thread(target=self.handle_client,args=(sock,addr)).start()
+                threading.Thread(target=self.handle_client,args=(sock,addr),daemon=True).start()
         except Exception as e:
             print("Exception in thread accept clients",e)
 
@@ -64,8 +64,8 @@ class ServerP2P():
 
         self.send_discovery_broadcast()
 
-        threading.Thread(target=self.broadcast_receiver).start()
-        threading.Thread(target=self.accept_clients).start()
+        threading.Thread(target=self.broadcast_receiver, daemon=True).start()
+        threading.Thread(target=self.accept_clients, daemon=True).start()
 
     def send_discovery_broadcast(self) -> None:
         message = self.my_p2p_host.to_json().encode()

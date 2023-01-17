@@ -1,6 +1,6 @@
 from protocol import Host
 import json
-host = Host(ip_addr="192.168.1.1")
+host = Host()
 json_str= host.to_json()
 print("json str ",json_str)
 

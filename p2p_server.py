@@ -99,7 +99,7 @@ class ServerP2P():
                 break
         conn.close()
         self.ingoing_hosts.remove(host_id)
-        print("Closed ingoing connection with",conn)
+        print("Closed ingoing connection with",addr)
     
     def accept_clients(self):
         try:

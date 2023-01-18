@@ -53,6 +53,8 @@ class ServerP2P():
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             conn.connect((ip_address,self.tcp_accept_port))
+            datagram = DatagramP2P(host=my_p2p_host)
+            ProtocolP2P.send_datagram(conn,datagram)
         except:
             conn.close()
             raise p2p_exceptions.FailToConnectToP2PServer('Could not connect to P2P server')
@@ -66,6 +68,7 @@ class ServerP2P():
             if self.ingoing_hosts.get_host(host_id) !=None:
                 raise p2p_exceptions.IngoingConnectionException("Host already connected")
         except:
+            print("Rejected host",addr)
             conn.close()
             return
         ProtocolP2P.send_datagram(conn,DatagramP2P(message="authenticated"))

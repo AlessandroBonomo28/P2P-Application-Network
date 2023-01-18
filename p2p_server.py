@@ -1,12 +1,10 @@
 import socket
 from protocol import HostP2P, ProtocolP2P,DatagramP2P
-import threading, time
-import p2p_exceptions, json
+import threading, time, json
+import p2p_exceptions
 
 class HostList():
     def __iter__(self):
-        #if len(self.host_list) == 0:
-        #    raise StopIteration
         self.i = 0
         self.__keys = list(self.host_list.keys())
         return self
@@ -73,7 +71,19 @@ class ServerP2P():
             return
         ProtocolP2P.send_datagram(conn,DatagramP2P(message="authenticated"))
         self.ingoing_hosts.update(datagram.host, conn)
+        current_host : HostP2P = datagram.host
         print("Authenticated",addr)
+
+        try:
+            self.establish_outgoing_conn(current_host,addr[0])
+        except Exception as e:
+            if isinstance(e,p2p_exceptions.OutgoingConnectionException):
+                print("Outgoing connection with ",addr," already exists")
+            else:
+                print("Could not establish outgoing connection:",e)
+        
+
+
         while True:
             try:
                 datagram = ProtocolP2P.recv_datagram(conn)
@@ -160,7 +170,7 @@ class ServerP2P():
         self.sock_broad_send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_broad_send.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        #self.send_discovery_broadcast()
+        self.send_discovery_broadcast()
 
         threading.Thread(target=self.broadcast_receiver, daemon=True).start()
         threading.Thread(target=self.accept_clients, daemon=True).start()
@@ -208,7 +218,7 @@ p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=6969, broad_listen_port=broa
 #p2p_server.send_discovery_broadcast()
 try:
     while(True):
-        p2p_server.send_discovery_broadcast()
+        #p2p_server.send_discovery_broadcast()
         print("sleep")
         time.sleep(5)
 except:

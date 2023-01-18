@@ -164,12 +164,22 @@ class ServerP2P():
 
         self.sock_broad_send.close()
     
+    def close_all_ingoing_connections(self):
+        for i in self.ingoing_hosts:
+            i["conn"].close()
+
+    def close_all_outgoing_connections(self):
+        for i in self.outgoing_hosts:
+            i["conn"].close()
+
     def close_tcp_accept(self):
         self.tcp_accept_socket.close()
 
     def close(self):
         self.close_broadcast()
         self.close_tcp_accept()
+        self.close_all_ingoing_connections()
+        self.close_all_outgoing_connections()
     
 
 
@@ -186,7 +196,7 @@ p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=5000, broad_listen_port=broa
 #p2p_server.send_discovery_broadcast()
 try:
     while(True):
-        p2p_server.send_discovery_broadcast()
+        #p2p_server.send_discovery_broadcast()
         print("sleep")
         time.sleep(1)
 except:

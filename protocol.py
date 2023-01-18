@@ -1,5 +1,5 @@
 import uuid, json, socket
-import netifaces, select
+import select
 import p2p_exceptions
 class HostP2P():
     @staticmethod

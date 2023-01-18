@@ -5,8 +5,8 @@ import p2p_exceptions, json
 
 class HostList():
     def __iter__(self):
-        if len(self.host_list) == 0:
-            raise StopIteration
+        #if len(self.host_list) == 0:
+        #    raise StopIteration
         self.i = 0
         self.__keys = list(self.host_list.keys())
         return self
@@ -122,6 +122,7 @@ class ServerP2P():
 
                 
         except Exception as e:
+            self.sock_broad_listen.close()
             print("Exception in thread broadcast receiver",e)
 
     def __init__(self, my_p2p_host : HostP2P, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
@@ -159,7 +160,7 @@ class ServerP2P():
         self.sock_broad_send.sendto(message, dest)
     
     def close_broadcast(self):
-        self.sock_broad_listen.shutdown(socket.SHUT_RDWR)
+        #self.sock_broad_listen.shutdown(socket.SHUT_RDWR)
         self.sock_broad_listen.close()
 
         self.sock_broad_send.close()

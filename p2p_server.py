@@ -82,8 +82,6 @@ class ServerP2P():
             else:
                 print("Could not establish outgoing connection:",e)
         
-
-
         while True:
             try:
                 datagram = ProtocolP2P.recv_datagram(conn)
@@ -159,6 +157,7 @@ class ServerP2P():
         self.my_p2p_host = my_p2p_host
 
         self.tcp_accept_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcp_accept_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.tcp_accept_socket.bind((self.host, tcp_accept_port))
         self.tcp_accept_socket.listen(self.BACKLOG_TCP_ACCEPTED_CONNECTIONS)
 

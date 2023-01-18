@@ -1,7 +1,7 @@
 import socket
 from protocol import HostP2P, ProtocolP2P,DatagramP2P
 import threading, time
-
+import p2p_exceptions, json
 
 class HostList():
     def __iter__(self):
@@ -25,6 +25,7 @@ class HostList():
             return self.host_list[host_id]["conn"]
         except:
             return None
+    
     def get_host(self,host_id: str):
         try:
             return self.host_list[host_id]["host"]
@@ -43,12 +44,25 @@ class HostList():
 
 class ServerP2P():
     BACKLOG_TCP_ACCEPTED_CONNECTIONS = 5
+
+    def establish_outgoing_conn(self,host : HostP2P, ip_address : str):
+        if self.outgoing_hosts.get_host(host.id) !=None:
+                raise p2p_exceptions.OutgoingConnectionException("Outgoing connection already exists")
+        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            conn.connect((ip_address,self.tcp_accept_port))
+        except:
+            conn.close()
+            raise p2p_exceptions.FailToConnectToP2PServer('Could not connect to P2P server')
+        self.outgoing_hosts.update(host,conn)
+        return conn
+
     def handle_client(self,conn : socket.socket, addr):
         try:
             datagram = ProtocolP2P.recv_datagram(conn)
             host_id = datagram.host.id
             if self.ingoing_hosts.get_host(host_id) !=None:
-                raise Exception("Host already connected")
+                raise p2p_exceptions.IngoingConnectionException("Host already connected")
         except:
             conn.close()
             return
@@ -80,6 +94,7 @@ class ServerP2P():
                 break
         conn.close()
         self.ingoing_hosts.remove(host_id)
+    
     def accept_clients(self):
         try:
             while True:
@@ -96,7 +111,16 @@ class ServerP2P():
                 (buf,address)=self.sock_broad_listen.recvfrom(self.buffer_size)
                 if not len(buf):
                     raise Exception('Buffer empty read')
-                print ("received",address, buf.decode())
+
+                print ("received broadcast from ",address)
+                try:
+                    json_str = buf.decode()
+                    host = HostP2P.from_json(json.loads(json_str))
+                    self.establish_outgoing_conn(host,address[0])
+                except Exception as e:
+                    print("Could not decode broadcast message from ",address, "Exception",e,"\n")
+
+                
         except Exception as e:
             print("Exception in thread broadcast receiver",e)
 

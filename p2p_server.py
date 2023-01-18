@@ -46,6 +46,8 @@ class ServerP2P():
     BACKLOG_TCP_ACCEPTED_CONNECTIONS = 5
 
     def establish_outgoing_conn(self,host : HostP2P, ip_address : str):
+        if host.id == self.my_p2p_host.id:
+            raise p2p_exceptions.SelfConnectNotAllowed('Cannot connect to self')
         if self.outgoing_hosts.get_host(host.id) !=None:
                 raise p2p_exceptions.OutgoingConnectionException("Outgoing connection already exists")
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -111,6 +113,13 @@ class ServerP2P():
                 (buf,address)=self.sock_broad_listen.recvfrom(self.buffer_size)
                 if not len(buf):
                     raise Exception('Buffer empty read')
+                
+                hostname = socket.getfqdn()
+                my_ip = socket.gethostbyname_ex(hostname)[2][1]
+
+                if address[0] == my_ip: # ignore broadcast from self
+                    #print("this broadcast was sent by you.")
+                    continue
 
                 print ("received broadcast from ",address)
                 try:
@@ -149,7 +158,7 @@ class ServerP2P():
         self.sock_broad_send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_broad_send.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        self.send_discovery_broadcast()
+        #self.send_discovery_broadcast()
 
         threading.Thread(target=self.broadcast_receiver, daemon=True).start()
         threading.Thread(target=self.accept_clients, daemon=True).start()
@@ -185,7 +194,7 @@ class ServerP2P():
 
 
 broad_listen_port = 10100
-broad_send_port = 10101
+broad_send_port = 10100
 my_p2p_host = HostP2P()
 p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=5000, broad_listen_port=broad_listen_port,
                         broad_send_port=broad_send_port)
@@ -197,9 +206,9 @@ p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=5000, broad_listen_port=broa
 #p2p_server.send_discovery_broadcast()
 try:
     while(True):
-        #p2p_server.send_discovery_broadcast()
+        p2p_server.send_discovery_broadcast()
         print("sleep")
-        time.sleep(1)
+        time.sleep(5)
 except:
     print("exit")
     p2p_server.close()

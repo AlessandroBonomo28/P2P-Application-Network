@@ -197,7 +197,7 @@ class ServerP2P():
 broad_listen_port = 10100
 broad_send_port = 10100
 my_p2p_host = HostP2P()
-p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=69690, broad_listen_port=broad_listen_port,
+p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=6969, broad_listen_port=broad_listen_port,
                         broad_send_port=broad_send_port)
 
 

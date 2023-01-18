@@ -114,12 +114,6 @@ class ServerP2P():
                 if not len(buf):
                     raise Exception('Buffer empty read')
                 
-                hostname = socket.getfqdn()
-                my_ip = socket.gethostbyname_ex(hostname)[2][1]
-
-                if address[0] == my_ip: # ignore broadcast from self
-                    #print("this broadcast was sent by you.")
-                    continue
 
                 print ("received broadcast from ",address)
                 try:
@@ -127,7 +121,11 @@ class ServerP2P():
                     host = HostP2P.from_json(json.loads(json_str))
                     self.establish_outgoing_conn(host,address[0])
                 except Exception as e:
-                    print("Could not decode broadcast message from ",address, "Exception",e,"\n")
+                    if isinstance(e,p2p_exceptions.SelfConnectNotAllowed):
+                        print("ignored self broadcast")
+                        continue
+                    else:
+                        print("Could not decode broadcast message from ",address, "Exception",e,"\n")
 
                 
         except Exception as e:

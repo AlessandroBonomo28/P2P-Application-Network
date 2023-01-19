@@ -88,14 +88,14 @@ class ServerP2P():
         self.ingoing_hosts.update(datagram.host, conn)
         current_host : HostP2P = datagram.host
         print("Authenticated",addr)
-
-        try:
+        #TODO stabilisci conn inversa
+        """try:
             self.establish_outgoing_conn(current_host,addr[0])
         except Exception as e:
             if isinstance(e,p2p_exceptions.OutgoingConnectionException):
                 print("Outgoing connection with ",addr," already exists")
             else:
-                print("Could not establish outgoing connection:",e)
+                print("Could not establish outgoing connection:",e)"""
         
         while True:
             try:
@@ -148,6 +148,12 @@ class ServerP2P():
                     #host = HostP2P.from_json(json.loads(json_str))
                     host = datagram.host
                     self.establish_outgoing_conn(host,address[0])
+                    if datagram.message == "DISCOVERY":
+                        datagram = DatagramP2P(message="DISCOVERY-RESPONSE",host=self.my_p2p_host)
+                        dest = (address,self.broad_send_port)
+                        ProtocolP2P.send_UDP_datagram(self.sock_broad_send,datagram,dest)
+                    elif datagram.message == "DISCOVERY-RESPONSE":
+                        print("Received discovery response from ",address)
                 except Exception as e:
                     if isinstance(e,p2p_exceptions.SelfConnectNotAllowed):
                         print("ignored self broadcast")
@@ -198,7 +204,7 @@ class ServerP2P():
         #dest = (self.broad_addr,self.broad_send_port)
         #self.sock_broad_send.sendto(message, dest)
         print("Broadcast sent...")
-    
+
     def close_broadcast(self):
         #self.sock_broad_listen.shutdown(socket.SHUT_RDWR)
         self.sock_broad_listen.close()

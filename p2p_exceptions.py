@@ -12,3 +12,5 @@ class FailToConnectToP2PServer(OutgoingConnectionException):
     pass
 class TimedOut(Exception):
     pass
+class BrokenHost(Exception):
+    pass

@@ -54,15 +54,26 @@ class HostList():
 class ServerP2P():
     BACKLOG_TCP_ACCEPTED_CONNECTIONS = 200
 
+    def __check_broken_host(self, host: HostP2P):
+        try:
+            conn = self.outgoing_hosts.get_conn(host.id)
+            ProtocolP2P.send_TCP_datagram(DatagramP2P(message="PING"))
+            ProtocolP2P.recv_TCP_datagram(conn,5)
+        except:
+            raise p2p_exceptions.BrokenHost('Host did not respond to ping')
+
     def establish_outgoing_conn(self,host : HostP2P, ip_address : str):
         if host.id == self.my_p2p_host.id:
             raise p2p_exceptions.SelfConnectNotAllowed('Cannot connect to self')
         if self.outgoing_hosts.exists_host_id(host.id):
-                #TODO check broadcast flooding
-                #dest = (ip_address,self.broad_send_port)
-                #self.sock_broad_send.sendto(self.my_p2p_host.to_json().encode(),dest)
+                try:
+                    self.__check_broken_host(host)
+                    raise p2p_exceptions.OutgoingConnectionException("Outgoing connection already exists")
+                except:
+                    print("Removed broken host")
+                    self.outgoing_hosts.remove(host.id)
 
-                raise p2p_exceptions.OutgoingConnectionException("Outgoing connection already exists")
+                
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             conn.connect((ip_address,self.tcp_accept_port))
@@ -137,15 +148,10 @@ class ServerP2P():
         try:
             while True:
                 print ("Looking for broadcast...")
-                #(buf,address)=self.sock_broad_listen.recvfrom(self.buffer_size)
-                #if not len(buf):
-                #    raise Exception('Buffer empty read')
                 datagram ,address = ProtocolP2P.recv_UDP_datagram(self.sock_broad_listen)
 
                 print ("received broadcast from ",address)
                 try:
-                    #json_str = buf.decode()
-                    #host = HostP2P.from_json(json.loads(json_str))
                     host = datagram.host
                     self.establish_outgoing_conn(host,address[0])
                     if datagram.message == "DISCOVERY":
@@ -200,15 +206,10 @@ class ServerP2P():
         datagram = DatagramP2P(message="DISCOVERY",host=self.my_p2p_host)
         dest = (self.broad_addr,self.broad_send_port)
         ProtocolP2P.send_UDP_datagram(self.sock_broad_send,datagram,dest)
-        #message = self.my_p2p_host.to_json().encode()
-        #dest = (self.broad_addr,self.broad_send_port)
-        #self.sock_broad_send.sendto(message, dest)
         print("Broadcast sent...")
 
     def close_broadcast(self):
-        #self.sock_broad_listen.shutdown(socket.SHUT_RDWR)
         self.sock_broad_listen.close()
-
         self.sock_broad_send.close()
     
     def close_all_ingoing_connections(self):

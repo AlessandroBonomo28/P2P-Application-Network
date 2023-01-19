@@ -37,7 +37,9 @@ class HostList():
         except:
             raise p2p_exceptions.HostNotFound('Host was not found')
 
-    
+    def print_hosts(self):
+        for i in self.host_list:
+            print(i["host"].id, i["conn"])
     
     def update(self, host : HostP2P, conn : socket.socket = None):
         self.host_list[host.id] = {"host": host, "conn":conn}
@@ -230,7 +232,9 @@ try:
         #p2p_server.send_discovery_broadcast()
         print("-"*40)
         print("Status ingoing: ",len(p2p_server.ingoing_hosts.host_list))
+        p2p_server.ingoing_hosts.print_hosts()
         print("Status outgoing: ",len(p2p_server.outgoing_hosts.host_list))
+        p2p_server.outgoing_hosts.print_hosts()
         print("go to sleep for",SLEEP_TIME)
         time.sleep(SLEEP_TIME)
 except:

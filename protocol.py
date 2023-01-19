@@ -10,7 +10,7 @@ class HostP2P():
         host = HostP2P(id=id,name=name,group=group)
         return host
     
-    def __init__(self,id : str = str(hex(uuid.getnode())), name : str ="Host",
+    def __init__(self,id : str = str(uuid.getnode()), name : str ="Host",
                  group : int=0) -> None:
         self.id = id
         self.name = name

@@ -39,7 +39,7 @@ class HostList():
 
     def print_hosts(self):
         for i in self.host_list:
-            print(self.host_list[i]["host"].id, self.host_list[i]["conn"])
+            print(self.host_list[i]["host"].id, self.host_list[i]["conn"].getpeername())
     
     def update(self, host : HostP2P, conn : socket.socket = None):
         self.host_list[host.id] = {"host": host, "conn":conn}

@@ -150,8 +150,8 @@ class ServerP2P():
                     self.establish_outgoing_conn(host,address[0])
                     if datagram.message == "DISCOVERY":
                         datagram = DatagramP2P(message="DISCOVERY-RESPONSE",host=self.my_p2p_host)
-                        
-                        ProtocolP2P.send_UDP_datagram(self.sock_broad_send,datagram,address)
+                        dest = (address[0],self.broad_send_port)
+                        ProtocolP2P.send_UDP_datagram(self.sock_broad_send,datagram,dest)
                     elif datagram.message == "DISCOVERY-RESPONSE":
                         print("Received discovery response from ",address)
                 except Exception as e:

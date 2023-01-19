@@ -1,3 +1,7 @@
+class HostNotFound(Exception):
+    pass
+class ConnectionNotFound(Exception):
+    pass
 class IngoingConnectionException(Exception):
     pass
 class OutgoingConnectionException(Exception):

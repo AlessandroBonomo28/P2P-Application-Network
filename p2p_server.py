@@ -16,20 +16,29 @@ class HostList():
             return self.host_list[k]
         else:
             raise StopIteration
-        
+
+
+    def exists_host_id(self, host_id : str):
+        try:
+            self.get_host_by_id(host_id)
+            return True
+        except:
+            return False
     
     def get_conn(self,host_id: str):
         try:
             return self.host_list[host_id]["conn"]
         except:
-            return None
+            raise p2p_exceptions.ConnectionNotFound('Connection was not found')
     
-    def get_host(self,host_id: str):
+    def get_host_by_id(self,host_id: str):
         try:
             return self.host_list[host_id]["host"]
-        except Exception as e:
-            #print("host not found",e)
-            return None
+        except:
+            raise p2p_exceptions.HostNotFound('Host was not found')
+
+    
+    
     def update(self, host : HostP2P, conn : socket.socket = None):
         self.host_list[host.id] = {"host": host, "conn":conn}
 
@@ -46,7 +55,7 @@ class ServerP2P():
     def establish_outgoing_conn(self,host : HostP2P, ip_address : str):
         if host.id == self.my_p2p_host.id:
             raise p2p_exceptions.SelfConnectNotAllowed('Cannot connect to self')
-        if self.outgoing_hosts.get_host(host.id) !=None:
+        if self.outgoing_hosts.exists_host_id(host.id):
                 raise p2p_exceptions.OutgoingConnectionException("Outgoing connection already exists")
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -63,7 +72,7 @@ class ServerP2P():
         try:
             datagram = ProtocolP2P.recv_datagram(conn,timeout=5)
             host_id = datagram.host.id
-            if self.ingoing_hosts.get_host(host_id) !=None:
+            if self.ingoing_hosts.exists_host_id(host_id):
                 raise p2p_exceptions.IngoingConnectionException("Host already connected")
         except Exception as e:
             print("Rejected host",addr, "\nReason of reject:",e)
@@ -144,7 +153,7 @@ class ServerP2P():
             self.sock_broad_listen.close()
             print("Exception in thread broadcast receiver",e)
 
-    def __init__(self, my_p2p_host : HostP2P, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='192.168.1.255' ) -> None:
+    def __init__(self, my_p2p_host : HostP2P, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='255.255.255.255' ) -> None:
         self.ingoing_hosts = HostList()
         self.outgoing_hosts = HostList()
 

@@ -21,7 +21,7 @@ my_p2p_host = HostP2P()
 datagram = DatagramP2P(host=my_p2p_host)
 
 #client_socket.send(datagram_json.encode())
-ProtocolP2P.send_datagram(client_socket,datagram)
+ProtocolP2P.send_TCP_datagram(client_socket,datagram)
 try:
     
     
@@ -38,8 +38,8 @@ try:
     print("received ",msg.decode())
 
     datagram = DatagramP2P(message="HOSTS")
-    ProtocolP2P.send_datagram(client_socket,datagram)
-    response = ProtocolP2P.recv_datagram(client_socket)
+    ProtocolP2P.send_TCP_datagram(client_socket,datagram)
+    response = ProtocolP2P.recv_TCP_datagram(client_socket)
     print("received hosts",response)
     hosts_list_str = response.data
     for i in hosts_list_str:
@@ -48,7 +48,7 @@ try:
     datagram = DatagramP2P(message="END")
 
     #client_socket.send("END".encode())
-    ProtocolP2P.send_datagram(client_socket,datagram)
+    ProtocolP2P.send_TCP_datagram(client_socket,datagram)
 except Exception as e:
     print("err while communicating",e)
 client_socket.close()

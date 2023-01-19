@@ -55,10 +55,10 @@ class DatagramP2P():
 class ProtocolP2P():
     buffer_size = 1024
     @staticmethod
-    def send_datagram(conn : socket.socket, datagram : DatagramP2P) -> None:
+    def send_TCP_datagram(conn : socket.socket, datagram : DatagramP2P) -> None:
         conn.send(datagram.to_json().encode())
     @staticmethod
-    def recv_datagram(conn : socket.socket, timeout : float = None) -> DatagramP2P:
+    def recv_TCP_datagram(conn : socket.socket, timeout : float = None) -> DatagramP2P:
         if not timeout:
             conn.setblocking(1)
             datagram_json = conn.recv(ProtocolP2P.buffer_size).decode()
@@ -70,3 +70,10 @@ class ProtocolP2P():
             else:
                 raise p2p_exceptions.TimedOut('Timed out')
         return DatagramP2P.from_json(datagram_json)
+    @staticmethod
+    def send_UDP_datagram(conn : socket.socket, datagram : DatagramP2P, dest) -> None:
+        conn.sendto(datagram.to_json().encode(),dest)
+    @staticmethod
+    def recv_UDP_datagram(conn : socket.socket) -> tuple[DatagramP2P,any]:
+        datagram_json, addr = conn.recvfrom(ProtocolP2P.buffer_size)
+        return DatagramP2P.from_json(datagram_json),addr

@@ -74,6 +74,6 @@ class ProtocolP2P():
     def send_UDP_datagram(conn : socket.socket, datagram : DatagramP2P, dest) -> None:
         conn.sendto(datagram.to_json().encode(),dest)
     @staticmethod
-    def recv_UDP_datagram(conn : socket.socket) -> tuple[DatagramP2P,any]:
+    def recv_UDP_datagram(conn : socket.socket):
         datagram_json, addr = conn.recvfrom(ProtocolP2P.buffer_size)
         return DatagramP2P.from_json(datagram_json),addr

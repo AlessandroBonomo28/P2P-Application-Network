@@ -1,3 +1,7 @@
+"""for i in range(1,50):
+    print(f"{i} users = {(i*(i-1))/2} connections")
+
+exit()"""
 from protocol import HostP2P
 from p2p_server import HostList
 import json
@@ -11,8 +15,8 @@ for i in l:
     print(i)
     
 
-
 exit()
+
 
 host = HostP2P()
 json_str= host.to_json()

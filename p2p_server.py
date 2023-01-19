@@ -28,7 +28,7 @@ class HostList():
         try:
             return self.host_list[host_id]["host"]
         except Exception as e:
-            print("host not found",e)
+            #print("host not found",e)
             return None
     def update(self, host : HostP2P, conn : socket.socket = None):
         self.host_list[host.id] = {"host": host, "conn":conn}
@@ -41,7 +41,7 @@ class HostList():
         self.host_list = {}
 
 class ServerP2P():
-    BACKLOG_TCP_ACCEPTED_CONNECTIONS = 5
+    BACKLOG_TCP_ACCEPTED_CONNECTIONS = 200
 
     def establish_outgoing_conn(self,host : HostP2P, ip_address : str):
         if host.id == self.my_p2p_host.id:
@@ -65,8 +65,8 @@ class ServerP2P():
             host_id = datagram.host.id
             if self.ingoing_hosts.get_host(host_id) !=None:
                 raise p2p_exceptions.IngoingConnectionException("Host already connected")
-        except:
-            print("Rejected host",addr)
+        except Exception as e:
+            print("Rejected host",addr, "\nReason of reject:",e)
             conn.close()
             return
         ProtocolP2P.send_datagram(conn,DatagramP2P(message="authenticated"))
@@ -214,13 +214,16 @@ p2p_server = ServerP2P(my_p2p_host, tcp_accept_port=6969, broad_listen_port=broa
 
 #p2p_server2 = ServerP2P(my_p2p_host,tcp_accept_port=5001, broad_listen_port=10101,
 #                        broad_send_port=10100)
-
+SLEEP_TIME = 5
 #p2p_server.send_discovery_broadcast()
 try:
     while(True):
         #p2p_server.send_discovery_broadcast()
-        print("sleep")
-        time.sleep(5)
+        print("-"*40)
+        print("Status ingoing: ",len(p2p_server.ingoing_hosts.host_list))
+        print("Status outgoing: ",len(p2p_server.outgoing_hosts.host_list))
+        print("go to sleep for",SLEEP_TIME)
+        time.sleep(SLEEP_TIME)
 except:
     print("exit")
     p2p_server.close()

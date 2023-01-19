@@ -58,6 +58,10 @@ class ServerP2P():
         if host.id == self.my_p2p_host.id:
             raise p2p_exceptions.SelfConnectNotAllowed('Cannot connect to self')
         if self.outgoing_hosts.exists_host_id(host.id):
+                #TODO check broadcast flooding
+                dest = (ip_address,self.broad_send_port)
+                self.sock_broad_send.sendto(self.my_p2p_host.to_json().encode(),dest)
+
                 raise p2p_exceptions.OutgoingConnectionException("Outgoing connection already exists")
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:

@@ -51,7 +51,7 @@ class ServerP2P():
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             conn.connect((ip_address,self.tcp_accept_port))
-            datagram = DatagramP2P(host=my_p2p_host)
+            datagram = DatagramP2P(host=self.my_p2p_host)
             ProtocolP2P.send_datagram(conn,datagram)
         except:
             conn.close()
@@ -59,9 +59,9 @@ class ServerP2P():
         self.outgoing_hosts.update(host,conn)
         return conn
 
-    def handle_client(self,conn : socket.socket, addr):
+    def handle_ingoing_conn(self,conn : socket.socket, addr):
         try:
-            datagram = ProtocolP2P.recv_datagram(conn)
+            datagram = ProtocolP2P.recv_datagram(conn,timeout=5)
             host_id = datagram.host.id
             if self.ingoing_hosts.get_host(host_id) !=None:
                 raise p2p_exceptions.IngoingConnectionException("Host already connected")
@@ -109,19 +109,19 @@ class ServerP2P():
         self.ingoing_hosts.remove(host_id)
         print("Closed ingoing connection with",addr)
     
-    def accept_clients(self):
+    def accept_ingoing_connections(self):
         try:
             while True:
                 conn , addr = self.tcp_accept_socket.accept()
                 print ("New client accepted: ",addr)
-                threading.Thread(target=self.handle_client,args=(conn,addr),daemon=True).start()
+                threading.Thread(target=self.handle_ingoing_conn,args=(conn,addr),daemon=True).start()
         except Exception as e:
             print("Exception in thread accept clients",e)
 
     def broadcast_receiver(self):
         try:
             while True:
-                print ("Looking for broadcast replies...")
+                print ("Looking for broadcast...")
                 (buf,address)=self.sock_broad_listen.recvfrom(self.buffer_size)
                 if not len(buf):
                     raise Exception('Buffer empty read')
@@ -172,12 +172,13 @@ class ServerP2P():
         self.send_discovery_broadcast()
 
         threading.Thread(target=self.broadcast_receiver, daemon=True).start()
-        threading.Thread(target=self.accept_clients, daemon=True).start()
+        threading.Thread(target=self.accept_ingoing_connections, daemon=True).start()
 
     def send_discovery_broadcast(self) -> None:
         message = self.my_p2p_host.to_json().encode()
         dest = (self.broad_addr,self.broad_send_port)
         self.sock_broad_send.sendto(message, dest)
+        print("Broadcast sent...")
     
     def close_broadcast(self):
         #self.sock_broad_listen.shutdown(socket.SHUT_RDWR)

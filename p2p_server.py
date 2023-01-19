@@ -72,8 +72,7 @@ class ServerP2P():
                 except:
                     print("Removed broken host")
                     self.outgoing_hosts.remove(host.id)
-
-                
+              
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             conn.connect((ip_address,self.tcp_accept_port))
@@ -99,14 +98,6 @@ class ServerP2P():
         self.ingoing_hosts.update(datagram.host, conn)
         current_host : HostP2P = datagram.host
         print("Authenticated",addr)
-        #TODO stabilisci conn inversa
-        """try:
-            self.establish_outgoing_conn(current_host,addr[0])
-        except Exception as e:
-            if isinstance(e,p2p_exceptions.OutgoingConnectionException):
-                print("Outgoing connection with ",addr," already exists")
-            else:
-                print("Could not establish outgoing connection:",e)"""
         
         while True:
             try:

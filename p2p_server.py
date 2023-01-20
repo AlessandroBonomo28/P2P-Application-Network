@@ -139,11 +139,19 @@ class ServerP2P():
         try:
             while True:
                 print ("Looking for broadcast...")
-                datagram ,address = ProtocolP2P.recv_UDP_datagram(self.sock_broad_listen)
-
+                try:
+                    datagram ,address = ProtocolP2P.recv_UDP_datagram(self.sock_broad_listen)
+                except:
+                    print("Could not decode broadcast")
+                    continue
+                host = datagram.host
+                
+                if host.group != self.my_p2p_host.group:
+                        print(f"Ignored Host {host.id} address {address}: group id doesn't match.")
+                        continue
+                
                 print ("received broadcast from ",address)
                 try:
-                    host = datagram.host
                     self.establish_outgoing_conn(host,address[0])
                     if datagram.message == "DISCOVERY":
                         datagram = DatagramP2P(message="DISCOVERY-RESPONSE",host=self.my_p2p_host)
@@ -154,9 +162,8 @@ class ServerP2P():
                 except Exception as e:
                     if isinstance(e,p2p_exceptions.SelfConnectNotAllowed):
                         print("ignored self broadcast")
-                        continue
                     else:
-                        print("Could not decode broadcast message from ",address, "Exception",e,"\n")
+                        print(f"Error while processing {address} broadcast ", "Exception",e,"\n")
 
                 
         except Exception as e:

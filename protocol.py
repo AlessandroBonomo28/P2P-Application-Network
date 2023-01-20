@@ -14,7 +14,7 @@ class HostP2P():
                  group : int=0) -> None:
         self.id = id
         self.name = name
-        self. group = group
+        self.group = group
         
     def to_json(self):
         return json.dumps(self, indent = 4, default=lambda o: o.__dict__)

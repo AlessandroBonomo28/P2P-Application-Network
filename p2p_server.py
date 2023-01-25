@@ -121,10 +121,11 @@ class ServerP2P():
                     ProtocolP2P.send_TCP_datagram(conn,DatagramP2P(status_code=-1, message="INVALID"))
             except Exception as e:
                 print("Exception while communicating",e)
+            finally:
+                conn.close()
+                self.ingoing_hosts.remove(host_id)
+                print("Closed ingoing connection with",addr)
                 break
-        conn.close()
-        self.ingoing_hosts.remove(host_id)
-        print("Closed ingoing connection with",addr)
     
     def accept_ingoing_connections(self):
         try:
@@ -163,12 +164,11 @@ class ServerP2P():
                     if isinstance(e,p2p_exceptions.SelfConnectNotAllowed):
                         print("ignored self broadcast")
                     else:
-                        print(f"Error while processing {address} broadcast ", "Exception",e,"\n")
-
-                
+                        print(f"Error while processing {address} broadcast ", "Exception",e,"\n")        
         except Exception as e:
-            self.sock_broad_listen.close()
             print("Exception in thread broadcast receiver",e)
+        finally:
+            self.sock_broad_listen.close()
 
     def __init__(self, my_p2p_host : HostP2P, tcp_accept_port: int, broad_listen_port : int, broad_send_port, buffer_size: int = 1024, broad_addr='255.255.255.255' ) -> None:
         self.ingoing_hosts = HostList()
